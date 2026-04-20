@@ -44,7 +44,5 @@ Substitui cada `name` pelo nome real do teu relatório e cada `url` pelo link de
 2. Clica em **Ficheiro → Incorporar relatório → Site ou portal**
 3. Copia o URL gerado e cola no campo `url` correspondente
 
-\---
 
-> ⚠️ \*\*Nota de segurança\*\*: as credenciais estão em texto simples no código JavaScript — qualquer pessoa com acesso ao código-fonte consegue vê-las. Para um ambiente de produção sensível, considera uma solução de autenticação adequada.
 
