@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Portal de Relatórios</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --navy: #0a1628;
+      --navy-mid: #0f2040;
+      --navy-light: #162a52;
+      --gold: #c9a84c;
+      --gold-light: #e8c96a;
+      --gold-dim: rgba(201,168,76,0.15);
+      --white: #f5f7fa;
+      --text-muted: rgba(245,247,250,0.55);
+      --glass: rgba(255,255,255,0.04);
+      --glass-border: rgba(255,255,255,0.09);
+      --error: #e05c5c;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--navy);
+      color: var(--white);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ─── BACKGROUND ─── */
+    .bg {
+      position: fixed; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 15% 10%, rgba(12,35,80,0.9) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 85% 90%, rgba(201,168,76,0.07) 0%, transparent 55%),
+        linear-gradient(135deg, #070e1f 0%, #0a1628 40%, #0d1e3d 100%);
+    }
+    .bg::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(201,168,76,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(201,168,76,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+    .bg::after {
+      content: '';
+      position: absolute;
+      width: 600px; height: 600px;
+      top: -150px; right: -150px;
+      background: radial-gradient(circle, rgba(201,168,76,0.05) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+
+    /* ─── PAGES ─── */
+    .page {
+      position: relative; z-index: 1;
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+      pointer-events: none;
+    }
+    .page.active {
+      opacity: 1; transform: translateY(0); pointer-events: all;
+    }
+    .page.hidden { display: none; }
+
+    /* ─── LOGIN ─── */
+    .login-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 52px 48px;
+      width: 100%; max-width: 440px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 32px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(201,168,76,0.06);
+      animation: cardIn 0.7s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(30px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .login-logo {
+      display: flex; align-items: center; gap: 14px;
+      margin-bottom: 36px;
+    }
+    .login-logo-icon {
+      width: 46px; height: 46px;
+      background: linear-gradient(135deg, var(--gold) 0%, #a8862e 100%);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 8px 20px rgba(201,168,76,0.3);
+    }
+    .login-logo-icon svg { width: 22px; height: 22px; fill: var(--navy); }
+    .login-logo-text { font-family: 'Playfair Display', serif; font-size: 1.15rem; line-height: 1.2; }
+    .login-logo-text span { display: block; font-size: 0.65rem; font-family: 'DM Sans', sans-serif; font-weight: 400; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); margin-top: 2px; }
+
+    .login-title { font-family: 'Playfair Display', serif; font-size: 1.9rem; margin-bottom: 6px; }
+    .login-subtitle { color: var(--text-muted); font-size: 0.88rem; margin-bottom: 36px; font-weight: 300; }
+
+    .field { margin-bottom: 20px; }
+    .field label { display: block; font-size: 0.75rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+    .field input {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      padding: 13px 16px;
+      color: var(--white);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    }
+    .field input::placeholder { color: rgba(245,247,250,0.25); }
+    .field input:focus {
+      border-color: var(--gold);
+      background: rgba(201,168,76,0.06);
+      box-shadow: 0 0 0 3px rgba(201,168,76,0.1);
+    }
+
+    .login-error {
+      color: var(--error);
+      font-size: 0.82rem;
+      margin-bottom: 16px;
+      min-height: 18px;
+      animation: shake 0.35s ease;
+    }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
+    }
+
+    .btn-primary {
+      width: 100%;
+      background: linear-gradient(135deg, var(--gold) 0%, #a8862e 100%);
+      color: var(--navy);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 600;
+      font-size: 0.9rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border: none;
+      border-radius: 10px;
+      padding: 14px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+      box-shadow: 0 8px 24px rgba(201,168,76,0.3);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(201,168,76,0.4); filter: brightness(1.05); }
+    .btn-primary:active { transform: translateY(0); box-shadow: 0 4px 12px rgba(201,168,76,0.2); }
+
+    /* ─── PORTAL ─── */
+    .portal-wrap {
+      width: 100%; max-width: 1100px;
+    }
+
+    .portal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 56px;
+      flex-wrap: wrap; gap: 16px;
+      animation: fadeUp 0.6s cubic-bezier(0.22,1,0.36,1) 0.1s both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .portal-brand { display: flex; align-items: center; gap: 16px; }
+    .portal-brand-icon {
+      width: 52px; height: 52px;
+      background: linear-gradient(135deg, var(--gold) 0%, #a8862e 100%);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 8px 24px rgba(201,168,76,0.25);
+    }
+    .portal-brand-icon svg { width: 26px; height: 26px; fill: var(--navy); }
+    .portal-brand-text h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.4rem, 3vw, 2rem);
+      line-height: 1.2;
+    }
+    .portal-brand-text p {
+      font-size: 0.75rem; font-weight: 400; letter-spacing: 0.15em;
+      text-transform: uppercase; color: var(--gold);
+    }
+
+    .logout-btn {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      color: var(--text-muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      padding: 10px 18px;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s, background 0.2s;
+    }
+    .logout-btn:hover { color: var(--white); border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.07); }
+    .logout-btn svg { width: 15px; height: 15px; stroke: currentColor; fill: none; }
+
+    .portal-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+      margin-bottom: 52px;
+      animation: fadeUp 0.6s cubic-bezier(0.22,1,0.36,1) 0.2s both;
+    }
+
+    /* ─── GRID ─── */
+    .reports-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      justify-items: center;
+    }
+
+    /* Center last row if odd */
+    .reports-grid > *:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
+      max-width: 320px;
+      width: 100%;
+    }
+
+    .report-card {
+      position: relative;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 28px 28px 24px;
+      cursor: pointer;
+      text-decoration: none;
+      color: var(--white);
+      display: flex; flex-direction: column;
+      gap: 12px;
+      overflow: hidden;
+      transition: transform 0.25s cubic-bezier(0.22,1,0.36,1),
+                  box-shadow 0.25s, border-color 0.25s, background 0.25s;
+      width: 100%;
+      animation: cardReveal 0.6s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    .report-card:nth-child(1) { animation-delay: 0.15s; }
+    .report-card:nth-child(2) { animation-delay: 0.22s; }
+    .report-card:nth-child(3) { animation-delay: 0.29s; }
+    .report-card:nth-child(4) { animation-delay: 0.36s; }
+    .report-card:nth-child(5) { animation-delay: 0.43s; }
+    .report-card:nth-child(6) { animation-delay: 0.50s; }
+    .report-card:nth-child(7) { animation-delay: 0.57s; }
+
+    @keyframes cardReveal {
+      from { opacity: 0; transform: translateY(24px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .report-card::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, var(--gold-dim) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .report-card:hover {
+      transform: translateY(-5px) scale(1.01);
+      border-color: rgba(201,168,76,0.35);
+      background: rgba(255,255,255,0.07);
+      box-shadow: 0 24px 56px rgba(0,0,0,0.4), 0 0 0 1px rgba(201,168,76,0.12);
+    }
+    .report-card:hover::before { opacity: 1; }
+
+    .card-icon {
+      width: 44px; height: 44px;
+      background: var(--gold-dim);
+      border: 1px solid rgba(201,168,76,0.2);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.25s, box-shadow 0.25s;
+    }
+    .report-card:hover .card-icon {
+      background: rgba(201,168,76,0.22);
+      box-shadow: 0 4px 16px rgba(201,168,76,0.2);
+    }
+    .card-icon svg { width: 20px; height: 20px; stroke: var(--gold); fill: none; stroke-width: 1.8; }
+
+    .card-body { flex: 1; }
+    .card-num {
+      font-size: 0.68rem; font-weight: 600; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--gold); opacity: 0.7;
+      margin-bottom: 5px;
+    }
+    .card-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem; line-height: 1.35;
+    }
+
+    .card-arrow {
+      align-self: flex-end;
+      color: var(--gold);
+      opacity: 0;
+      transform: translateX(-6px);
+      transition: opacity 0.25s, transform 0.25s;
+      font-size: 1.1rem;
+    }
+    .report-card:hover .card-arrow { opacity: 1; transform: translateX(0); }
+
+    /* ─── FOOTER ─── */
+    .portal-footer {
+      margin-top: 56px;
+      text-align: center;
+      font-size: 0.75rem;
+      color: rgba(245,247,250,0.2);
+      letter-spacing: 0.08em;
+      animation: fadeUp 0.6s cubic-bezier(0.22,1,0.36,1) 0.6s both;
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 600px) {
+      .login-card { padding: 36px 28px; }
+      .reports-grid { grid-template-columns: 1fr; }
+      .reports-grid > *:last-child:nth-child(odd) { grid-column: unset; max-width: unset; }
+      .portal-header { margin-bottom: 36px; }
+    }
+    @media (max-width: 400px) {
+      .login-card { padding: 28px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg"></div>
+
+<!-- ═══════════════ LOGIN PAGE ═══════════════ -->
+<div class="page active" id="page-login">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M3 3h7v7H3zm0 11h7v7H3zM14 3h7v7h-7zm0 11h7v7h-7z"/></svg>
+      </div>
+      <div class="login-logo-text">
+        Portal de Relatórios
+        <span>Business Intelligence</span>
+      </div>
+    </div>
+
+    <h2 class="login-title">Bem‑vindo</h2>
+    <p class="login-subtitle">Introduza as suas credenciais para continuar.</p>
+
+    <div class="field">
+      <label for="username">Utilizador</label>
+      <input type="text" id="username" placeholder="nome de utilizador" autocomplete="username"/>
+    </div>
+    <div class="field">
+      <label for="password">Palavra‑passe</label>
+      <input type="password" id="password" placeholder="••••••••" autocomplete="current-password"/>
+    </div>
+
+    <div class="login-error" id="login-error"></div>
+
+    <button class="btn-primary" id="btn-login">Entrar</button>
+  </div>
+</div>
+
+<!-- ═══════════════ PORTAL PAGE ═══════════════ -->
+<div class="page hidden" id="page-portal">
+  <div class="portal-wrap">
+
+    <div class="portal-header">
+      <div class="portal-brand">
+        <div class="portal-brand-icon">
+          <svg viewBox="0 0 24 24"><path d="M3 3h7v7H3zm0 11h7v7H3zM14 3h7v7h-7zm0 11h7v7h-7z"/></svg>
+        </div>
+        <div class="portal-brand-text">
+          <h1>Portal de Relatórios</h1>
+          <p>Business Intelligence · Power BI</p>
+        </div>
+      </div>
+      <button class="logout-btn" id="btn-logout">
+        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        Sair
+      </button>
+    </div>
+
+    <div class="portal-divider"></div>
+
+    <div class="reports-grid" id="reports-grid">
+      <!-- Cards injetados via JS -->
+    </div>
+
+    <div class="portal-footer">© 2025 Portal de Relatórios · Todos os direitos reservados</div>
+  </div>
+</div>
+
+<script>
+  /* ─── CREDENCIAIS ─── */
+  const CREDENTIALS = {
+    username: 'admin',
+    password: 'admin123'
+  };
+
+  /* ─── RELATÓRIOS — substitui name e url conforme necessário ─── */
+  const REPORTS = [
+    { name: 'Relatório 1', url: 'https://app.powerbi.com/link-1' },
+    { name: 'Relatório 2', url: 'https://app.powerbi.com/link-2' },
+    { name: 'Relatório 3', url: 'https://app.powerbi.com/link-3' },
+    { name: 'Relatório 4', url: 'https://app.powerbi.com/link-4' },
+    { name: 'Relatório 5', url: 'https://app.powerbi.com/link-5' },
+    { name: 'Relatório 6', url: 'https://app.powerbi.com/link-6' },
+    { name: 'Relatório 7', url: 'https://app.powerbi.com/link-7' },
+  ];
+
+  /* ─── SVG ICONS (stroke) para os cards ─── */
+  const ICONS = [
+    `<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>`,
+    `<svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`,
+    `<svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
+    `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+    `<svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>`,
+    `<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+    `<svg viewBox="0 0 24 24"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>`,
+  ];
+
+  /* ─── RENDER CARDS ─── */
+  const grid = document.getElementById('reports-grid');
+  REPORTS.forEach((r, i) => {
+    const a = document.createElement('a');
+    a.href = r.url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.className = 'report-card';
+    a.innerHTML = `
+      <div class="card-icon">${ICONS[i % ICONS.length]}</div>
+      <div class="card-body">
+        <div class="card-num">Relatório ${String(i+1).padStart(2,'0')}</div>
+        <div class="card-title">${r.name}</div>
+      </div>
+      <div class="card-arrow">→</div>
+    `;
+    grid.appendChild(a);
+  });
+
+  /* ─── NAVEGAÇÃO ─── */
+  function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => {
+      p.classList.remove('active');
+      p.classList.add('hidden');
+    });
+    const target = document.getElementById(id);
+    target.classList.remove('hidden');
+    requestAnimationFrame(() => target.classList.add('active'));
+  }
+
+  /* ─── LOGIN ─── */
+  function doLogin() {
+    const u = document.getElementById('username').value.trim();
+    const p = document.getElementById('password').value;
+    const err = document.getElementById('login-error');
+
+    if (u === CREDENTIALS.username && p === CREDENTIALS.password) {
+      err.textContent = '';
+      showPage('page-portal');
+    } else {
+      err.textContent = 'Utilizador ou palavra-passe incorretos.';
+      // re-trigger animation
+      err.style.animation = 'none';
+      err.offsetHeight;
+      err.style.animation = '';
+    }
+  }
+
+  document.getElementById('btn-login').addEventListener('click', doLogin);
+  document.getElementById('password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+  document.getElementById('username').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('password').focus(); });
+
+  /* ─── LOGOUT ─── */
+  document.getElementById('btn-logout').addEventListener('click', () => {
+    document.getElementById('username').value = '';
+    document.getElementById('password').value = '';
+    showPage('page-login');
+  });
+</script>
+</body>
+</html>
